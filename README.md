@@ -32,7 +32,7 @@ To set up your environment, please follow the instructions in:
 
 To construct and preprocess the dataset used in this project, refer to:
 
-📂 [`./Dataset/`](./Dataset/)
+📂 [`./Datasets/`](./Datasets/)
 
 ---
 
@@ -53,4 +53,4 @@ If you find this work useful, please consider citing:
 
 ## 📬 Contact
 
-For questions, feel free to open an issue or contact [Jesimon Barreto](https://github.com/jesimonbarreto).
+For questions, feel free to open an issue or contact jesimonbarreto#gmail.com [Jesimon Barreto](https://github.com/jesimonbarreto).
