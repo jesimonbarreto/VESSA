@@ -43,7 +43,7 @@ If you find this work useful, please consider citing:
 ```bibtex
 @misc{barreto2025vessa,
   title   = {VESSA: Video-based Efficient Self-Supervised Adaptation},
-  author  = {Jesimon Barreto},
+  author  = {Jesimon Barreto, Carlos Caetano, Andre Araujo, William Schwartz},
   year    = {2025},
   note    = {Manuscript in preparation}
 }
