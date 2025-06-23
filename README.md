@@ -1,6 +1,6 @@
 # VESSA: Video-based Efficient Self-Supervised Adaptation
 
-![VESSA Pipeline](./images/vesa_pipeline.png)
+![VESSA Pipeline](./images/vessa_pipeline.png)
 
 **VESSA** is a lightweight and effective approach for adapting vision foundation models to new domains using short object-centric videos.  
 It leverages self-supervised distillation to extract robust representations without requiring any manual labels.
