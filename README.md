@@ -14,8 +14,8 @@ The implementation is based on the **[Scenic](https://github.com/google-research
 ## 📁 Repository Structure
 
 - `./Environment/` — contains scripts and instructions to prepare the environment  
-- `./Dataset/` — contains tools and instructions to construct and organize the datasets  
-- `./image/` — contains figures and diagrams used for publication and documentation  
+- `./Datasets/` — contains tools and instructions to construct and organize the datasets  
+- `./images/` — contains figures and diagrams used for publication and documentation  
 - `./core/` — core implementation of the method (models, training, evaluation)
 
 ---
