@@ -4,6 +4,11 @@ import numpy as np
 from collections import defaultdict
 from sklearn.model_selection import train_test_split
 
+
+# Set the seed to ensure reproducibility
+SEED = 42
+random.seed(SEED)
+
 # Base path where the .zip files are located
 base_path = '/mnt/disks/stg_dataset/dataset/CO3D/'
 
@@ -31,7 +36,7 @@ for filename in os.listdir(base_path):
 
             # Split folders into train and test sets
             train_folders, test_folders = train_test_split(
-                folder_names, test_size=0.25, random_state=42
+                folder_names, test_size=0.25, random_state=SEED
             )
 
             train_dict[class_name].extend(train_folders)
