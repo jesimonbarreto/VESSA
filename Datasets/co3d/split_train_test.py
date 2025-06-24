@@ -4,19 +4,19 @@ import numpy as np
 from collections import defaultdict
 from sklearn.model_selection import train_test_split
 
-# Caminho base dos arquivos zip
+# Base path where the .zip files are located
 base_path = '/mnt/disks/stg_dataset/dataset/CO3D/'
 
-# Dicionários para armazenar as listas por classe
+# Dictionaries to store video folder names per class
 train_dict = defaultdict(list)
 test_dict = defaultdict(list)
 
-# Itera por todos os arquivos .zip no diretório
+# Iterate through all .zip files in the directory
 for filename in os.listdir(base_path):
     if filename.endswith('.zip') and filename.startswith('CO3D_'):
         zip_path = os.path.join(base_path, filename)
         with zipfile.ZipFile(zip_path, 'r') as zf:
-            # Lista os caminhos únicos de pastas de vídeos dentro do zip
+            # Collect unique video folder names inside the zip
             folder_names = set()
             class_name = filename.replace('CO3D_', '').replace('.zip', '')
             for name in zf.namelist():
@@ -29,7 +29,7 @@ for filename in os.listdir(base_path):
             if not folder_names:
                 continue
 
-            # Divide entre treino e teste
+            # Split folders into train and test sets
             train_folders, test_folders = train_test_split(
                 folder_names, test_size=0.25, random_state=42
             )
@@ -37,12 +37,12 @@ for filename in os.listdir(base_path):
             train_dict[class_name].extend(train_folders)
             test_dict[class_name].extend(test_folders)
 
-# Caminho completo dos arquivos de saída
+# Output file paths
 train_path = os.path.join(base_path, 'train.npz')
 test_path = os.path.join(base_path, 'test.npz')
 
-# Salva como npz com dicionários
+# Save dictionaries as .npz files
 np.savez(train_path, **train_dict)
 np.savez(test_path, **test_dict)
 
-print(f"Salvo com sucesso em:\n{train_path}\n{test_path}")
+print(f"Successfully saved to:\n{train_path}\n{test_path}")
