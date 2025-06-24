@@ -11,7 +11,7 @@ The implementation is based on the **[Scenic](https://github.com/google-research
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 - `./Environment/` — contains scripts and instructions to prepare the environment  
 - `./Datasets/` — contains tools and instructions to construct and organize the datasets  
@@ -20,7 +20,7 @@ The implementation is based on the **[Scenic](https://github.com/google-research
 
 ---
 
-## ⚙️ Setup
+## Setup
 
 To set up your environment, please follow the instructions in:
 
@@ -28,7 +28,7 @@ To set up your environment, please follow the instructions in:
 
 ---
 
-## 📦 Datasets Preparation
+## Datasets Preparation
 
 To construct and preprocess the dataset used in this project, refer to:
 
@@ -36,7 +36,7 @@ To construct and preprocess the dataset used in this project, refer to:
 
 ---
 
-## 📜 Citation
+## Citation
 
 If you find this work useful, please consider citing:
 
@@ -51,6 +51,14 @@ If you find this work useful, please consider citing:
 
 ---
 
-## 📬 Contact
+## Acknowledgments
+
+This research was supported by **CAPES** (Coordination for the Improvement of Higher Education Personnel - Brazil), **Google** and benefited from computational resources generously provided by **Google** through the **Google Cloud Platform Academic Research Grants** program. We are grateful for their support in enabling this work.
+
+---
+
+
+
+## Contact
 
 For questions, feel free to open an issue or contact jesimonbarreto#gmail.com [Jesimon Barreto](https://github.com/jesimonbarreto).
