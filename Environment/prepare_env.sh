@@ -1,5 +1,7 @@
 git clone https://github.com/google-research/scenic.git
 cd scenic/
+#scenic version base used
+git checkout 1e7282a
 pip install -e .
 cd ../
 rm -rf scenic

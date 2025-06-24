@@ -61,4 +61,4 @@ This research was supported by **CAPES** (Coordination for the Improvement of Hi
 
 ## Contact
 
-For questions, feel free to open an issue or contact jesimonbarreto#gmail.com [Jesimon Barreto](https://github.com/jesimonbarreto).
+For questions, feel free to open an issue or contact [Jesimon Barreto jesimonbarreto@gmail.com](https://github.com/jesimonbarreto).

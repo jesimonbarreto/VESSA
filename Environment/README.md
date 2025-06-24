@@ -22,13 +22,9 @@ source venv/bin/activate  # For Windows: use venv\Scripts\activate.bat
 # 2. Clone and install Scenic (original version, temporarily)
 git clone https://github.com/google-research/scenic.git
 cd scenic/
+#scenic version base used
+git checkout 1e7282a
 pip install .
-
-# 3. Go back and remove Scenic to replace with your customized fork
-cd ../
-rm -rf scenic
-git clone https://github.com/jesimonbarreto/scenic.git
-cd scenic/
 
 # 4. Install required dependencies
 pip install Pillow
