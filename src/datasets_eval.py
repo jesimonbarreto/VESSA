@@ -58,7 +58,7 @@ def get_dataset(*,
                 prefetch_buffer_size=2,
                 dataset_configs=None,
                 dataset_service_address: Optional[str] = None):
-  """Returns a generator for training Dino on a specified dataset.
+  """Returns a generator for training Vessa on a specified dataset.
 
   Args:
     batch_size: int; Determines the training batch size.

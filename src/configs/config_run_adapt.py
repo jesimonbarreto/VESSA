@@ -1,5 +1,5 @@
 # pylint: disable=line-too-long
-"""Default config for Dino training on ImageNet2012 for 100 epochs."""
+"""Default config for Vessa training on ImageNet2012 for 100 epochs."""
 
 import ml_collections
 
@@ -51,7 +51,7 @@ def get_config():
   config.lora_use = True
   config.lora_rank = 64
   # Dataset.
-  config.dataset_name = 'dino_dataset'
+  config.dataset_name = 'vessa_dataset'
   config.data_dtype_str = 'float32'
   config.dataset_configs = ml_collections.ConfigDict()
   config.dataset_configs.prefetch_to_device = 2
@@ -66,7 +66,7 @@ def get_config():
   config.dir_plot = '/home/jesimonbarreto/images/'
 
   # Training.'MVImagenet'
-  #Loss: L2, Lwf, cosine, v*dino X (1-v)other
+  #Loss: L2, Lwf, cosine, v*vessa X (1-v)other
   config.alpha_loss = 1
   config.beta_loss = 1
   config.gama_loss = 1
@@ -261,7 +261,7 @@ def get_config():
   config.momentum_teacher = 0.996
   config.use_bn_in_head = False
   config.load_weight = True
-  config.load_weights = 'tips_b14' #'dino_vitb16' #'dinov2_vit'+version.lower()+'14'#'dino_vitb16'#'dino_vitdeits16'#'dinov2_vit'+version.lower()+'14'
+  config.load_weights = 'tips_b14' #'vessa_vitb16' #'vessav2_vit'+version.lower()+'14'#'vessa_vitb16'#'vessa_vitdeits16'#'vessav2_vit'+version.lower()+'14'
 
 
   # LOCA specific parameters.

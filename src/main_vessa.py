@@ -1,4 +1,4 @@
-"""Main file for launching Dino trainings."""
+"""Main file for launching Vessa trainings."""
 
 from absl import flags
 from clu import metric_writers
@@ -6,10 +6,10 @@ import jax
 import jax.numpy as jnp
 import ml_collections
 from scenic import app
-import dino_dataset  # pylint: disable=unused-import
+import vessa_dataset  # pylint: disable=unused-import
 import ops  # pylint: disable=unused-import
-#import trainer_dino as trainer
-import trainer_dino as trainer
+#import trainer_vessa as trainer
+import trainer_vessa as trainer
 from scenic.train_lib import train_utils
 import wandb
 
@@ -18,7 +18,7 @@ FLAGS = flags.FLAGS
 
 def main(rng: jnp.ndarray, config: ml_collections.ConfigDict, workdir: str,
          writer: metric_writers.MetricWriter):
-  """Main entry point for dino training."""
+  """Main entry point for vessa training."""
   data_rng, rng = jax.random.split(rng)
   
   print(config)

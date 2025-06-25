@@ -20,7 +20,7 @@ import CO3D_dataset
 
 #tamanho das amostras estao indo é diferente para o batch
 
-@datasets.add_dataset('dino_dataset')
+@datasets.add_dataset('vessa_dataset')
 def get_dataset(*,
                 batch_size,
                 eval_batch_size,
@@ -31,7 +31,7 @@ def get_dataset(*,
                 prefetch_buffer_size=2,
                 dataset_configs=None,
                 dataset_service_address: Optional[str] = None):
-  """Returns a generator for training Dino on a specified dataset.
+  """Returns a generator for training Vessa on a specified dataset.
 
   Args:
     batch_size: int; Determines the training batch size.
@@ -49,7 +49,7 @@ def get_dataset(*,
     A dataset_utils.Dataset() which includes train_iter and dict of meta_data.
   """
   del eval_batch_size, rng
-  logging.info('Loading train split of the %s for Dino training.',
+  logging.info('Loading train split of the %s for Vessa training.',
                dataset_configs.dataset)
   n_train_ex = dataset_utils.get_num_examples(dataset_configs.dataset,
                                               dataset_configs.train_split,

@@ -307,11 +307,11 @@ def get_resize_small(smaller_size, method="area", antialias=True):
 
   return _resize_small
 '''
-@registry.Registry.register("preprocess_ops.dino_transform", "function")
+@registry.Registry.register("preprocess_ops.vessa_transform", "function")
 @utils.InKeyOutKey()
-def dino_transform(size=224, crop_size=224, mean=[0.5], std=[0.5]):
+def vessa_transform(size=224, crop_size=224, mean=[0.5], std=[0.5]):
   """Crop and flip an image and keep track of these operations with a mask."""
-  def dino_transform(image):
+  def vessa_transform(image):
 
     def to_tensor(image):
       image = tf.image.convert_image_dtype(image, dtype=tf.float32) / 255.0
@@ -362,7 +362,7 @@ def dino_transform(size=224, crop_size=224, mean=[0.5], std=[0.5]):
         return image
     image = transform_image(image)
     return image
-  return dino_transform
+  return vessa_transform
 
 @registry.Registry.register("preprocess_ops.flip_with_mask", "function")
 @utils.InKeyOutKey()

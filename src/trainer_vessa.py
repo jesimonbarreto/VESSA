@@ -24,8 +24,8 @@ import jax.profiler
 import ml_collections
 import optax
 from scenic.dataset_lib import dataset_utils
-import utils_dino as utils
-import vit_dino as vit
+import utils_vessa as utils
+import vit_vessa as vit
 from scenic.train_lib import lr_schedules
 from scenic.train_lib import train_utils
 import math, sys, os
@@ -98,7 +98,7 @@ def generate_conditional_freeze_layers(rules, negate_flags, use_and=True):
         for rule, negate in zip(rules, negate_flags)
     )
 
-def dino_train_step(
+def vessa_train_step(
     train_state: utils.TrainState,
     batch: Batch,
     center: jnp.ndarray,
@@ -187,18 +187,18 @@ def dino_train_step(
       student_out = st["x_train"]
       s_emb = st["x_norm_clstoken"]
     
-    loss_dino, center = loss_fn(teacher_out["x_train"],
+    loss_vessa, center = loss_fn(teacher_out["x_train"],
                                 student_out,
                                 #teacher_out["x_norm_clstoken"],
                                 #s_emb,
                                 center,
                                 epoch)
-    total_loss = loss_dino
+    total_loss = loss_vessa
 
-    return total_loss, (loss_dino, center)
+    return total_loss, (loss_vessa, center)
   
   compute_gradient_fn = jax.value_and_grad(training_loss_fn, has_aux=True)
-  (total_loss, (loss_dino, center)), grad = compute_gradient_fn(
+  (total_loss, (loss_vessa, center)), grad = compute_gradient_fn(
       train_state.params, center, epoch)
   #metrics = metrics_fn(logits, batch)
   metrics = (
@@ -259,7 +259,7 @@ def train(
   fstexe = True
 
   # Build the loss_fn, metrics, and flax_model.
-  model = vit.ViTDinoModel(config, dataset.meta_data)
+  model = vit.ViTVessaModel(config, dataset.meta_data)
 
   # Start a run, tracking hyperparameters
   wandb.init(
@@ -540,9 +540,9 @@ def train(
   un_loss = config.get('un_loss', False)
 
   # The function that performs one step of loca training.
-  dino_train_step_pmapped = jax.pmap(
+  vessa_train_step_pmapped = jax.pmap(
       functools.partial(
-          dino_train_step,
+          vessa_train_step,
           flax_model=model.flax_model,
           #alterar loss function
           loss_fn=model.loss_function if not un_loss else model.loss_function_uncertainty,
@@ -593,7 +593,7 @@ def train(
                      number_crops=config.ncrops)
         fstexe = False
 
-      train_state, center, tm = dino_train_step_pmapped(
+      train_state, center, tm = vessa_train_step_pmapped(
                                   train_state,
                                   train_batch,
                                   center,

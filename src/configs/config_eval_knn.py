@@ -144,7 +144,7 @@ def get_config():
   config.model.temperature = 0.1
   config.sharpening = 0.05
 
-  # Dino specific parameters.
+  # Vessa specific parameters.
   config.n_ref_positions = int((reference_resolution // patch)**2)
   config.apply_cluster_loss = True
   config.reference_seqlen = -1#int(0.2 * config.n_ref_positions)  # 20% of 196 is 39
@@ -153,7 +153,7 @@ def get_config():
 
   config.checkpoint = False#'/home/jesimonbarreto/scenic/checkpoint_501'
   config.dir_weight = '/home/jesimonbarreto/'
-  config.weight_load = 'dinov2_vit'+version.lower()+'14'
+  config.weight_load = 'vessav2_vit'+version.lower()+'14'
   # Learning rate.
   #cosine schedule lr
   config.lr_configs = ml_collections.ConfigDict()

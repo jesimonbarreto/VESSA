@@ -21,15 +21,15 @@ if sys.version_info.major == 3 and sys.version_info.minor >= 10:
 else:
   from collections import MutableMapping
 
-import vit_dino as vit
-import utils_dino as utils
+import vit_vessa as vit
+import utils_vessa as utils
 import jax
 import jax.numpy as jnp
 import tensorflow_datasets as tfds
 import datasets
 from scenic.dataset_lib import dataset_utils
 
-import dino_dataset  # pylint: disable=unused-import
+import vessa_dataset  # pylint: disable=unused-import
 #from scenic.dataset_lib import tinyImagenet_dataset
 import datasets_eval
 import optax

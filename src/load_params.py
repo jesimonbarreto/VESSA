@@ -27,20 +27,20 @@ def split_qkv_b(qkv, nheads):
   return qkv[0], qkv[1], qkv[2]
 
 
-def get_param_from_pytorch_style_dict(dino, scenic_name, nheads,
+def get_param_from_pytorch_style_dict(vessa, scenic_name, nheads,
                                       absorbe_ls=True):
-  """Converts key name from dino official weights to this codebase name."""
-  n = int((dino['pos_embed'].shape[1])**0.5)
+  """Converts key name from vessa official weights to this codebase name."""
+  n = int((vessa['pos_embed'].shape[1])**0.5)
   easy_mappings = {
-      'ToTokenSequence_0/cls': dino['cls_token'] + dino['pos_embed'][:, 0, :],
+      'ToTokenSequence_0/cls': vessa['cls_token'] + vessa['pos_embed'][:, 0, :],
       'ToTokenSequence_0/posembed_input':
-          dino['pos_embed'][:, 1:, :].reshape(1, n, n, -1),
+          vessa['pos_embed'][:, 1:, :].reshape(1, n, n, -1),
       'ToTokenSequence_0/embedding/kernel':
-          dino['patch_embed.proj.weight'].transpose(2, 3, 1, 0),  # OIHW -> HWIO
-      'ToTokenSequence_0/embedding/bias': dino['patch_embed.proj.bias'],
+          vessa['patch_embed.proj.weight'].transpose(2, 3, 1, 0),  # OIHW -> HWIO
+      'ToTokenSequence_0/embedding/bias': vessa['patch_embed.proj.bias'],
 
-      'encoder_norm/scale': dino.get('norm.weight', dino.get('fc_norm.weight')),
-      'encoder_norm/bias': dino.get('norm.bias', dino.get('fc_norm.weight')),
+      'encoder_norm/scale': vessa.get('norm.weight', vessa.get('fc_norm.weight')),
+      'encoder_norm/bias': vessa.get('norm.bias', vessa.get('fc_norm.weight')),
   }
   try:
     return easy_mappings[scenic_name]
@@ -55,42 +55,42 @@ def get_param_from_pytorch_style_dict(dino, scenic_name, nheads,
   pt_prefix = f'blocks.{iblock}.'
 
   block = {
-      prefix + 'LayerNorm_0/scale': dino[pt_prefix + 'norm1.weight'],
-      prefix + 'LayerNorm_0/bias': dino[pt_prefix + 'norm1.bias'],
+      prefix + 'LayerNorm_0/scale': vessa[pt_prefix + 'norm1.weight'],
+      prefix + 'LayerNorm_0/bias': vessa[pt_prefix + 'norm1.bias'],
       prefix + 'MultiHeadDotProductAttention_0/query/kernel':
-          split_qkv_w(dino[pt_prefix + 'attn.qkv.weight'], nheads)[0],
+          split_qkv_w(vessa[pt_prefix + 'attn.qkv.weight'], nheads)[0],
       prefix + 'MultiHeadDotProductAttention_0/key/kernel':
-          split_qkv_w(dino[pt_prefix + 'attn.qkv.weight'], nheads)[1],
+          split_qkv_w(vessa[pt_prefix + 'attn.qkv.weight'], nheads)[1],
       prefix + 'MultiHeadDotProductAttention_0/value/kernel':
-          split_qkv_w(dino[pt_prefix + 'attn.qkv.weight'], nheads)[2],
+          split_qkv_w(vessa[pt_prefix + 'attn.qkv.weight'], nheads)[2],
       prefix + 'MultiHeadDotProductAttention_0/out/kernel':
-          dino[pt_prefix + 'attn.proj.weight'].T.reshape(
-              nheads, -1, dino[pt_prefix + 'attn.proj.weight'].shape[-1]),
+          vessa[pt_prefix + 'attn.proj.weight'].T.reshape(
+              nheads, -1, vessa[pt_prefix + 'attn.proj.weight'].shape[-1]),
       prefix + 'MultiHeadDotProductAttention_0/out/bias':
-          dino[pt_prefix + 'attn.proj.bias'],
-      prefix + 'LayerNorm_1/scale': dino[pt_prefix + 'norm2.weight'],
-      prefix + 'LayerNorm_1/bias': dino[pt_prefix + 'norm2.bias'],
+          vessa[pt_prefix + 'attn.proj.bias'],
+      prefix + 'LayerNorm_1/scale': vessa[pt_prefix + 'norm2.weight'],
+      prefix + 'LayerNorm_1/bias': vessa[pt_prefix + 'norm2.bias'],
       prefix + 'MlpBlock_0/Dense_0/kernel':
-          dino[pt_prefix + 'mlp.fc1.weight'].T,
-      prefix + 'MlpBlock_0/Dense_0/bias': dino[pt_prefix + 'mlp.fc1.bias'],
+          vessa[pt_prefix + 'mlp.fc1.weight'].T,
+      prefix + 'MlpBlock_0/Dense_0/bias': vessa[pt_prefix + 'mlp.fc1.bias'],
       prefix + 'MlpBlock_0/Dense_1/kernel':
-          dino[pt_prefix + 'mlp.fc2.weight'].T,
-      prefix + 'MlpBlock_0/Dense_1/bias': dino[pt_prefix + 'mlp.fc2.bias'],
+          vessa[pt_prefix + 'mlp.fc2.weight'].T,
+      prefix + 'MlpBlock_0/Dense_1/bias': vessa[pt_prefix + 'mlp.fc2.bias'],
   }
 
-  if pt_prefix + 'attn.qkv.bias' in dino:
+  if pt_prefix + 'attn.qkv.bias' in vessa:
     block.update({
         prefix + 'MultiHeadDotProductAttention_0/key/bias': split_qkv_b(
-            dino[pt_prefix + 'attn.qkv.bias'], nheads)[1],
+            vessa[pt_prefix + 'attn.qkv.bias'], nheads)[1],
         prefix + 'MultiHeadDotProductAttention_0/query/bias':
-            split_qkv_b(dino[pt_prefix + 'attn.qkv.bias'], nheads)[0],
+            split_qkv_b(vessa[pt_prefix + 'attn.qkv.bias'], nheads)[0],
         prefix + 'MultiHeadDotProductAttention_0/value/bias':
-            split_qkv_b(dino[pt_prefix + 'attn.qkv.bias'], nheads)[2],
+            split_qkv_b(vessa[pt_prefix + 'attn.qkv.bias'], nheads)[2],
     })
 
-  if pt_prefix + 'ls1.gamma' in dino:
-    ls1 = dino[pt_prefix + 'ls1.gamma']
-    ls2 = dino[pt_prefix + 'ls2.gamma']
+  if pt_prefix + 'ls1.gamma' in vessa:
+    ls1 = vessa[pt_prefix + 'ls1.gamma']
+    ls2 = vessa[pt_prefix + 'ls2.gamma']
     block.update({prefix + 'gamma_1': ls1, prefix + 'gamma_2': ls2})
     if absorbe_ls:
       k_key = prefix + 'MultiHeadDotProductAttention_0/out/kernel'
@@ -469,12 +469,12 @@ def load_params(checkpoint_name: str, checkpoint_path: str, params: Any,
 
 # pylint: disable=line-too-long
 PYTORCH_STYLE_WEIGHTS = {
-    #'dinov2_vits14': '/home/jesimon/Documentos/mestrado/dinov2_vits14.npz',
-    #'dinov2_vitb14': '/home/jesimon/Documentos/mestrado/dinov2_vitb14.npz',
-    'dinov2_vits14': '/home/jesimonbarreto/dinov2_vits14.npz',
-    'dinov2_vitb14': '/home/jesimonbarreto/dinov2_vitb14.npz',
-    'dinov2_vitl14': '/home/jesimonbarreto/dinov2_vitl14.npz',
-    'dino_vitb16': '/home/jesimonbarreto/dino_vitb16.npz',
-    'dino_vitdeits16': '/home/jesimonbarreto/dino_deits16.npz',
+    #'vessav2_vits14': '/home/jesimon/Documentos/mestrado/vessav2_vits14.npz',
+    #'vessav2_vitb14': '/home/jesimon/Documentos/mestrado/vessav2_vitb14.npz',
+    'vessav2_vits14': '/home/jesimonbarreto/vessav2_vits14.npz',
+    'vessav2_vitb14': '/home/jesimonbarreto/vessav2_vitb14.npz',
+    'vessav2_vitl14': '/home/jesimonbarreto/vessav2_vitl14.npz',
+    'vessa_vitb16': '/home/jesimonbarreto/vessa_vitb16.npz',
+    'vessa_vitdeits16': '/home/jesimonbarreto/vessa_deits16.npz',
     'tips_b14': '/home/jesimonbarreto/tips_b14.npz',
 }

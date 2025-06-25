@@ -23,16 +23,16 @@ This folder (`./src`) contains all source code modules, including training and e
 
 ## 🚀 Running Training
 
-Training is performed using the `main_dino` script, based on a configuration file that defines data paths, hyperparameters, and model architecture.
+Training is performed using the `main_vessa` script, based on a configuration file that defines data paths, hyperparameters, and model architecture.
 
 ```bash
-python -m main_dino --config=config_adapt.py --workdir=dir/save/files/train
+python -m main_vessa --config=config_adapt.py --workdir=dir/save/files/train
 ```
 
 If you encounter permission issues or are working in a restricted environment, you may prepend with:
 
 ```bash
-sudo -E python -m main_dino --config=config_adapt.py --workdir=dir/save/files/train
+sudo -E python -m main_vessa --config=config_adapt.py --workdir=dir/save/files/train
 ```
 
 - `--config`: Python file that defines training parameters (e.g., `config_adapt.py`)
@@ -58,7 +58,7 @@ sudo -E python -m knn_main --config=config_eval.py --workdir=dir/save/files/test
 
 ## 📂 Directory Contents
 
-- `main_dino.py` — self-supervised training loop using DINO-style distillation  
+- `main_vessa.py` — self-supervised training loop using DINO-style distillation  
 - `knn_main.py` — k-NN based evaluation on extracted embeddings  
 - `config_adapt.py` — configuration for training (VESSA adaptation)  
 - `config_eval.py` — configuration for k-NN evaluation  

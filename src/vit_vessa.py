@@ -104,17 +104,6 @@ class ToTokenSequence(nn.Module):
 
     return x, posemb
 
-"""class LoRA(nn.Module):
-  input_dim: int
-  rank: int  # Dimensão reduzida de projeção (ex: 4 ou 8)
-
-  def setup(self):
-      self.A = self.param('lora_A', nn.initializers.xavier_uniform(), (self.input_dim, self.rank))
-      self.B = self.param('lora_B', nn.initializers.zeros, (self.rank, self.input_dim))
-
-  def __call__(self, x):
-      return x + (x @ self.A) @ self.B
-"""
 
 class LoRA(nn.Module):
     """LoRA (Low-Rank Adaptation) usando a estrutura de Dense."""
@@ -312,12 +301,6 @@ class ViTDINO(nn.Module):
                 x, deterministic=not train)
     x_norm = nn.LayerNorm(name='encoder_norm')(x)
     x_cls = x_norm[:, 0]
-    '''x_out = ProjectionModule(
-          hidden_dim=self.head_hidden_dim,
-          bottleneck_dim=self.head_bottleneck_dim,
-          output_dim=self.head_output_dim,
-          name='projection_module')(
-              x_norm, train)#.reshape((-1, self.head_output_dim))'''
 
     x_train = ProjectionHead(
           hidden_dim=self.head_hidden_dim,
@@ -325,7 +308,7 @@ class ViTDINO(nn.Module):
           output_dim=self.head_output_dim,
           n_layers=self.n_layers,
           name='projection_head')(
-              x_cls, train)#.reshape((-1, self.head_output_dim))'''
+              x_cls, train)
 
     return {
             "x_norm_clstoken": x_norm[:, 0],
@@ -446,7 +429,7 @@ class CrossAttentionEncoderBlock(vit.Encoder1DBlock):
     return y + x
 
 
-class ViTDinoModel(base_model.BaseModel):
+class ViTVessaModel(base_model.BaseModel):
   """Vision Transformer model for DINO training."""
 
   
@@ -574,51 +557,6 @@ class ViTDinoModel(base_model.BaseModel):
     return total_loss, center
 
 
-  def loss_function_cos(self,
-                  teacher_output: jnp.ndarray,
-                  student_output: jnp.ndarray,
-                  teacher_cls_embedding: jnp.ndarray,
-                  student_cls_embedding: jnp.ndarray,
-                  center: jnp.ndarray,
-                  epoch: int,
-                  weights: Optional[jnp.ndarray] = None) -> float:
-    """DINO loss + Cosine regularização entre teacher (global CLS) e student (todos os CLS)."""
-
-    student_out = student_output / self.student_temp
-    student_out = jnp.split(student_out, self.ncrops)
-
-    temp = self.teacher_temp_schedule[epoch]
-    teacher_out = opr.softmax((teacher_output - center) / temp, axis=-1)
-    teacher_out = jnp.split(lax.stop_gradient(teacher_out), 2)
-
-    total_loss = 0
-    n_loss_terms = 0
-
-    for iq, q in enumerate(teacher_out):
-        for v in range(len(student_out)):
-            if v == iq:
-                continue
-            loss = jnp.sum(-q * opr.log_softmax(student_out[v], axis=-1), axis=-1)
-            total_loss += jnp.mean(loss)
-            n_loss_terms += 1
-
-    total_loss /= n_loss_terms
-
-    # ✅ Cosine regularização: teacher CLS vs student CLS de todos os crops
-    reg_terms = []
-    for i in range(2):  # teacher_cls_embedding: (B, D) x 2 global views
-        for j in range(self.ncrops):  # student_cls_embedding: (B, D) x ncrops
-            dist = self.cosine_distance(student_cls_embedding[j], teacher_cls_embedding[i])
-            reg_terms.append(jnp.mean(dist))
-    cosine_reg = jnp.mean(jnp.stack(reg_terms))
-
-    alpha = 0.04
-    total_loss += alpha * cosine_reg
-
-    center = self.update_center(teacher_output, center)
-    return total_loss, center
-
-
   
   def loss_function_uncertainty(self,
                   teacher_output: jnp.ndarray,
@@ -626,44 +564,45 @@ class ViTDinoModel(base_model.BaseModel):
                   center: jnp.ndarray,
                   epoch: int,
                   weights: Optional[jnp.ndarray] = None) -> float:
-    """Loss do DINO modificada para melhorar discriminação com ponderação por incerteza."""
+    """VESSA loss function modified to improve discrimination via uncertainty weighting."""
 
-    # Normaliza saída do estudante
+    # Normalize student output
     student_out = student_output / self.student_temp
     student_out = jnp.split(student_out, self.ncrops)
 
-    # Ajusta a temperatura do professor
+    # Adjust teacher temperature
     temp = self.teacher_temp_schedule[epoch]
     teacher_out = opr.softmax((teacher_output - center) / temp, axis=-1)
     teacher_out = jnp.split(lax.stop_gradient(teacher_out), 2)
 
-    # Inicializa loss e contagem de termos
+    # Initialize total loss and loss term counter
     total_loss = 0
     n_loss_terms = 0
 
     for iq, q in enumerate(teacher_out):
         for v in range(len(student_out)):
             if v == iq:
-                continue  # Pula casos onde estudante e professor usam a mesma view
+                continue  # Skip cases where student and teacher use the same view
             
-            # 🔹 Calcula a Loss Original do DINO 🔹
+            # 🔹 Compute Original DINO Loss 🔹
             loss = jnp.sum(-q * opr.log_softmax(student_out[v], axis=-1), axis=-1)
 
-            # 🔥 **Ponderação por Incerteza** 🔥
-            entropy = -jnp.sum(q * jnp.log(q + 1e-6), axis=-1)  # Entropia do professor
-            gamma = 1.0  # Ajuste da ponderação
-            loss = (1 + gamma * entropy) * loss  # Maior peso para exemplos de alta incerteza
+            # 🔥 **Uncertainty Weighting** 🔥
+            entropy = -jnp.sum(q * jnp.log(q + 1e-6), axis=-1)  # Teacher entropy
+            gamma = 1.0  # Weighting adjustment factor
+            loss = (1 + gamma * entropy) * loss  # Higher weight for high-uncertainty examples
 
             total_loss += jnp.mean(loss)
             n_loss_terms += 1
 
-    # Normaliza a loss final
+    # Normalize final loss
     total_loss /= n_loss_terms
 
-    # Atualiza o centro do professor
+    # Update teacher center
     center = self.update_center(teacher_output, center)
 
     return total_loss, center
+
 
   def cosine_similarity(self, A, B):
     dot_product = jnp.dot(A, B)
@@ -678,11 +617,6 @@ class ViTDinoModel(base_model.BaseModel):
       cosine_distances = jnp.array([self.cosine_distance(p, t) for p, t in zip(preds, targets)])
       return jnp.mean(cosine_distances)
   
-  '''def l2_loss(self, preds, targets):
-      #preds = preds.reshape(preds.shape[0], -1) 
-      #targets = targets.reshape(targets.shape[0], -1)
-      squared_diff = jnp.square(preds - targets)
-      return jnp.mean(squared_diff, axis=1)'''
   
   # Função para calcular L2 loss
   def l2_loss(self, preds, targets):
@@ -739,85 +673,3 @@ class ViTDinoModel(base_model.BaseModel):
       # ema update
       center = center * self.center_momentum + batch_center * (1 - self.center_momentum)
       return center
-
-
-class DINOLoss:
-    def __init__(self, config):
-        super().__init__()
-        self.student_temp = config.student_temp
-        self.center_momentum = config.center_momentum
-        self.ncrops = config.ncrops
-        self.out_dim = config.model.head_output_dim
-        self.shapex = (1, self.out_dim)
-        self.center = jnp.zeros((1, self.out_dim))
-        self.teacher_temp_schedule = jnp.concatenate((
-            jnp.linspace(config.warmup_teacher_temp,
-                        config.teacher_temp, config.warmup_teacher_temp_epochs),
-            jnp.ones(config.num_training_epochs - config.warmup_teacher_temp_epochs) * config.teacher_temp
-        ))
-    
-    def get_metrics_fn(self, split: Optional[str] = None):
-      del split
-      return functools.partial(
-          classification_model.classification_metrics_function,
-          target_is_onehot=True,
-          metrics=dict(
-              {'loss': (
-                  model_utils.weighted_unnormalized_softmax_cross_entropy,
-                  model_utils.num_examples)}))
-
-    def loss_function(self,
-                    teacher_output: jnp.ndarray,
-                    student_output: jnp.ndarray,
-                    epoch,
-                    weights: Optional[jnp.ndarray] = None) -> float:
-      """Returns the cross-entropy loss."""
-
-      #loss = model_utils.weighted_softmax_cross_entropy(predictions, targets,
-      #                                                  weights)
-
-      student_out = student_output / self.student_temp
-      student_out = jnp.split(student_out, self.ncrops)
-      
-      #jax.debug.print("🤯 Epoca: {epoch} 🤯", epoch=epoch)
-      # teacher centering and sharpening
-      temp = self.teacher_temp_schedule[epoch]
-      teacher_out = opr.softmax((teacher_output - self.center) / temp, axis=-1)
-      teacher_out = jnp.split(lax.stop_gradient(teacher_out),2)
-
-      total_loss = 0
-      n_loss_terms = 0
-      for iq, q in enumerate(teacher_out):
-          for v in range(len(student_out)):
-              if v == iq:
-                  # we skip cases where student and teacher operate on the same view
-                  continue
-              loss = jnp.sum(-q * opr.log_softmax(student_out[v], axis=-1), axis=-1)
-              total_loss += jnp.mean(loss)
-              n_loss_terms += 1
-      total_loss /= n_loss_terms
-      #total_loss = jnp.array(total_loss, float)
-      #jax.debug.print("🤯 Center Antes: {center} 🤯", center=center)
-      self.update_center(teacher_output)
-      #jax.debug.print("🤯 Center Depois: {center} 🤯", center=center)
-      return total_loss
-    
-    def reduce(self, value):
-      # Dummy function to simulate the reduction operation
-      def reduce_sum(x):
-        return jax.lax.psum(x, axis_name='batch')
-      # Perform the reduction
-      global_sum = jax.pmap(reduce_sum)(value)
-      return global_sum
-    
-    def update_center(self, teacher_out):
-        """
-        Update center used for teacher output.
-        """
-        teacher_output = lax.stop_gradient(teacher_out)
-        batch_center = jnp.sum(teacher_output, axis=0, keepdims=True)
-        batch_center = self.reduce(batch_center)
-        batch_center = batch_center / (len(teacher_output) * jax.local_device_count())
-        # ema update
-        self.center = self.center * self.center_momentum + batch_center * (1 - self.center_momentum)
-        return self.center

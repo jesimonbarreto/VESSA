@@ -24,15 +24,15 @@ if sys.version_info.major == 3 and sys.version_info.minor >= 10:
 else:
   from collections import MutableMapping
 
-import vit_dino as vit
-import utils_dino as utils
+import vit_vessa as vit
+import utils_vessa as utils
 import jax
 import jax.numpy as jnp
 import tensorflow_datasets as tfds
 import datasets
 from scenic.dataset_lib import dataset_utils
 
-import dino_dataset  # pylint: disable=unused-import
+import vessa_dataset  # pylint: disable=unused-import
 #from scenic.dataset_lib import tinyImagenet_dataset
 import datasets_eval
 import optax
@@ -49,7 +49,7 @@ from jax.lax import map as map_
 from flax.core import freeze, unfreeze
 from flax.core import frozen_dict
 from flax.core.frozen_dict import FrozenDict
-import utils_dino as utils
+import utils_vessa as utils
 
 from functools import partial
 from jax import jit
@@ -61,13 +61,13 @@ FLAGS = flags.FLAGS
 
 def get_highest_checkpoint(directory):
     """
-    Retorna o caminho completo do arquivo checkpoint com o maior número no formato `checkpoint_numero`.
+    Returns the full path of the checkpoint file with the highest number in the format `checkpoint_number`.
 
     Args:
-        directory (str): Caminho do diretório onde buscar os arquivos.
+        directory (str): Path to the directory where the files are located.
 
     Returns:
-        str: Caminho completo do arquivo com o maior número encontrado no formato `checkpoint_numero`, ou None se não encontrar.
+        str: Full path to the file with the highest number found in the format `checkpoint_number`, or None if not found.
     """
     checkpoint_pattern = re.compile(r"^checkpoint_(\d+)$")
     highest_checkpoint = None
@@ -88,13 +88,13 @@ def get_highest_checkpoint(directory):
 
 def get_all_checkpoint_numbers(directory):
     """
-    Retorna uma lista dos números dos arquivos de checkpoint no formato `checkpoint_numero`.
+    Returns a list of numbers from checkpoint files in the format `checkpoint_number`.
 
     Args:
-        directory (str): Caminho do diretório onde buscar os arquivos.
+        directory (str): Path to the directory where the files are located.
 
     Returns:
-        List[int]: Lista de números extraídos dos arquivos encontrados, ou lista vazia se nenhum for encontrado.
+        List[int]: List of numbers extracted from the found checkpoint files, or an empty list if none are found.
     """
     checkpoint_pattern = re.compile(r"^checkpoint_(\d+)$")
     checkpoint_numbers = []
@@ -108,14 +108,15 @@ def get_all_checkpoint_numbers(directory):
 
 def generate_conditional_freeze_layers(rules, negate_flags, use_and=True):
     """
-    Retorna uma função lambda que verifica várias condições de 'in' ou 'not in' em cada elemento da lista.
+    Returns a lambda function that checks multiple 'in' or 'not in' conditions for each element in the list.
 
-    Parâmetros:
-        rules (list[str]): Lista de strings para verificar no nome da camada.
-        negate_flags (list[bool]): Lista de booleans para indicar se deve usar 'not in' (True) ou 'in' (False) para cada regra.
+    Args:
+        rules (list[str]): List of strings to check in the layer name.
+        negate_flags (list[bool]): List of booleans indicating whether to use 'not in' (True) or 'in' (False) for each rule.
+        use_and (bool): Whether to apply all conditions (AND) or at least one (OR).
 
-    Retorna:
-        function: Função lambda personalizada.
+    Returns:
+        function: Customized lambda function.
     """
     return lambda layer_name: (all if use_and else any)(
         (rule in layer_name if negate else rule not in layer_name)
@@ -157,16 +158,7 @@ def representation_fn_eval(
     Representation learned by the model for the given inputs and the labels and
     masks. If `gather_to_host` is True, these are collected from all hosts.
   """
-  #variables = {'params': train_state.params, **train_state.model_state}
 
-  '''embedding = flax_model.apply(
-    variables, 
-    batch['sample'],
-    train=False,
-    return_feats = True,
-    debug=False, 
-    project_feats = project_feats,
-  )'''
   embedding = flax_model.apply(
         {'params': train_state.params},
         batch['image_resized'],
@@ -226,7 +218,7 @@ def train(
 
   
   # Build the loss_fn, metrics, and flax_model.
-  model = vit.ViTDinoModel(config, dataset.meta_data)
+  model = vit.ViTVessaModel(config, dataset.meta_data)
 
   # Randomly initialize model parameters.
   rng, init_rng = jax.random.split(rng)
@@ -297,14 +289,6 @@ def train(
       print(f"file: {ckpt_file}")
       print(f"ckpt_num: {ckpt_num}")
 
-      #try:
-
-      '''train_state, _ = train_utils.restore_checkpoint(
-          ckpt_dir, 
-          train_state, 
-          assert_exist=True, 
-          step=int(ckpt_num),
-        )'''
       
       train_state = utils.restore_pretrained_checkpoint(
           ckpt_dir, 
@@ -313,23 +297,19 @@ def train(
           step=int(ckpt_num),
         )
         
-      #except:
-
-      #  sys.exit("no checkpoint found")
-      #  continue
 
       train_state = jax_utils.replicate(train_state)
 
     else:
       '''=============================================='''
-      print('Here... trying load')
+      print('Trying load foundation model')
       from load_params import load_params
       print(f' {config.dir_weight} {config.weight_load}')
       params = load_params(config.weight_load,config.dir_weight, params,
                     params_key='teacher_weights',
                     force_random_init= None)
 
-      print('Here... finished load')
+      print('Finishing load')
       '''=============================================='''
       # Only one model function but two sets of parameters.
       ema_params = copy.deepcopy(params)
@@ -388,124 +368,127 @@ def train(
 
     @jax.vmap
     def euclidean_distance(x1, x2):
-      return jnp.linalg.norm(x1 - x2, axis=-1)
+        return jnp.linalg.norm(x1 - x2, axis=-1)
 
     @jax.vmap
     def cosine_similarity(x1, x2):
-      return jnp.dot(x1, x2) / (jnp.linalg.norm(x1, axis=-1) * jnp.linalg.norm(x2, axis=-1))
-    
+        return jnp.dot(x1, x2) / (jnp.linalg.norm(x1, axis=-1) * jnp.linalg.norm(x2, axis=-1))
+
     def compute_diff(u, v):
-      return (u[:, None] - v[None, :]) ** 2
+        return (u[:, None] - v[None, :]) ** 2
 
     compute_diff = jax.vmap(compute_diff, in_axes=1, out_axes=-1)
 
     p_argsort = jax.pmap(jnp.argsort, in_axes=0)
 
     def calculate_similarity(train_samples, test_samples):
-      return jnp.dot(test_samples, train_samples.T)
+        return jnp.dot(test_samples, train_samples.T)
 
     def compute_distance(U, V):
-      return compute_diff(U, V).mean(axis=-1)
-    
+        return compute_diff(U, V).mean(axis=-1)
+
     def compute_dist(u, v):
-      return jnp.linalg.norm(u[:, None] - v[None, :], axis=-1)
-    
-    # Função para calcular a acurácia de um batch
+        return jnp.linalg.norm(u[:, None] - v[None, :], axis=-1)
+
     def calculate_batch_correct_predictions(probas, labels):
-      predictions = jnp.argmax(probas, axis=1)
-      correct_predictions = jnp.sum(predictions == labels)
-      return correct_predictions
-    
+        predictions = jnp.argmax(probas, axis=1)
+        correct_predictions = jnp.sum(predictions == labels)
+        return correct_predictions
+
     devices = jax.device_count()
     n_test = config.dataset_configs.batch_size_test
-    
+
     ks = config.get('ks')
-    
+
     def compute_k_closest(U, V, k):
-      D = compute_distance(U, V)
-      D = D.reshape(devices, n_test // devices, -1)
-      nearest = p_argsort(D)[..., 1:k+1]
-      return nearest
-    
+        D = compute_distance(U, V)
+        D = D.reshape(devices, n_test // devices, -1)
+        nearest = p_argsort(D)[..., 1:k+1]
+        return nearest
+
     def one_hot(x, num_classes):
-      return jax.nn.one_hot(x, num_classes)
-    
+        return jax.nn.one_hot(x, num_classes)
+
     len_test = 0
-    T=config.get('T')
+    T = config.get('T')
     total_correct_predictions = {k: 0 for k in ks}
     total_samples = 0
     max_k = jnp.array(ks).max()
+
     for i in range(config.steps_per_epoch_eval):
-      print(f'processing step eval {i}')
-      batch_eval = next(dataset.valid_iter)
-      emb_test = extract_features(batch_eval)[0]
-      bl, bg, emb = emb_test.shape
-      emb_test = emb_test.reshape((bl*bg, emb))
-      label_eval = batch_eval['label'].reshape((bl*bg))
-      norm_res = round(jnp.linalg.norm(jnp.array([emb_test[0]]), ord=2))==1
-      print(f'processing batch test {i} shape {emb_test.shape}. Norma 1 {norm_res}')
-      if not norm_res:
-        emb_test = normalize(emb_test)
-    
-      print(f'embeeding shape test {emb_test.shape}')
-      sim_all = []
-      labels = []
-      len_test += len(batch_eval)
-      for j in range(config.steps_per_epoch):
-        emb_file_save = os.path.join(dir_save_ckp, f'ckp_{step}_b{j}')
-        data_load = jnp.load(emb_file_save+'.npz')
-        emb_train = data_load['emb']#extract_features(batch_train)
-        label_train = data_load['label']#batch_train['label'][0]
+        print(f'Processing evaluation step {i}')
+        batch_eval = next(dataset.valid_iter)
+        emb_test = extract_features(batch_eval)[0]
+        bl, bg, emb = emb_test.shape
+        emb_test = emb_test.reshape((bl * bg, emb))
+        label_eval = batch_eval['label'].reshape((bl * bg))
+        
+        norm_res = round(jnp.linalg.norm(jnp.array([emb_test[0]]), ord=2)) == 1
+        print(f'Processing test batch {i} with shape {emb_test.shape}. Norm 1? {norm_res}')
+        
+        if not norm_res:
+            emb_test = normalize(emb_test)
 
-        sim = calculate_similarity(emb_train, emb_test)
-        sim_all.append(sim)
-        labels.append(label_train)
-      
-      sim_all = jnp.concatenate(sim_all, axis=1)
-      labels = jnp.concatenate(labels)
+        print(f'Embedding shape (test): {emb_test.shape}')
+        sim_all = []
+        labels = []
+        len_test += len(batch_eval)
 
-      # Usamos argsort para obter os índices que ordenariam a matriz
-      sorted_indices = jnp.argsort(sim_all, axis=-1)[:, ::-1]  # Ordena em ordem decrescente
-      topk_indices = sorted_indices[:, :max_k]
+        for j in range(config.steps_per_epoch):
+            emb_file_save = os.path.join(dir_save_ckp, f'ckp_{step}_b{j}')
+            data_load = jnp.load(emb_file_save + '.npz')
+            emb_train = data_load['emb']
+            label_train = data_load['label']
 
-      # Selecionamos os maiores valores de similaridade usando os índices ordenados
-      topk_sims = jnp.take_along_axis(sim_all, topk_indices, axis=-1)
-      labels = labels[topk_indices]#jnp.take_along_axis(labels, topk_indices, axis=-1)
+            sim = calculate_similarity(emb_train, emb_test)
+            sim_all.append(sim)
+            labels.append(label_train)
 
-      batch_size = labels.shape[0]
-      topk_sims_transform = softmax(topk_sims / T, axis=1)
-      
-      matmul = one_hot(labels, num_classes=num_classes) * topk_sims_transform[:, :, None]
-      
-      probas_for_k = {k: jnp.sum(matmul[:, :k, :], axis=1) for k in ks}
+        sim_all = jnp.concatenate(sim_all, axis=1)
+        labels = jnp.concatenate(labels)
 
-      for k in ks:
-        correct_predictions = calculate_batch_correct_predictions(probas_for_k[k], label_eval)
-        total_correct_predictions[k] += correct_predictions
-        wandb.log({f'batch_size_{k}':batch_size, 
-                     f'correct_predictions{k}':correct_predictions,
-                     f'acc_rel{k}':correct_predictions/batch_size})
-        print(f'Considerando k== {k} -- batch {batch_size}/{correct_predictions} certos')
-      total_samples += batch_size
-      
+        # Use argsort to get indices that would sort the matrix
+        sorted_indices = jnp.argsort(sim_all, axis=-1)[:, ::-1]  # Sort descending
+        topk_indices = sorted_indices[:, :max_k]
 
-    # Calcular a acurácia total para cada K
+        # Select top similarity values using sorted indices
+        topk_sims = jnp.take_along_axis(sim_all, topk_indices, axis=-1)
+        labels = labels[topk_indices]  # Matches the topk ordering
+
+        batch_size = labels.shape[0]
+        topk_sims_transform = softmax(topk_sims / T, axis=1)
+
+        matmul = one_hot(labels, num_classes=num_classes) * topk_sims_transform[:, :, None]
+
+        probas_for_k = {k: jnp.sum(matmul[:, :k, :], axis=1) for k in ks}
+
+        for k in ks:
+            correct_predictions = calculate_batch_correct_predictions(probas_for_k[k], label_eval)
+            total_correct_predictions[k] += correct_predictions
+            wandb.log({
+                f'batch_size_{k}': batch_size,
+                f'correct_predictions{k}': correct_predictions,
+                f'acc_rel{k}': correct_predictions / batch_size
+            })
+            print(f'For k == {k} -- batch size: {batch_size}, correct predictions: {correct_predictions}')
+        
+        total_samples += batch_size
+
+    # Calculate total accuracy
     total_accuracies = {k: total_correct_predictions[k] / total_samples for k in ks}
 
-    # Resultado
-    print(f'total samples used {total_samples}')
-    print("Acurácia total para diferentes valores de K:")
+    # Final results
+    print(f'Total number of test samples used: {total_samples}')
+    print("Overall accuracy for different values of K:")
     for k, accuracy in total_accuracies.items():
         wandb.log({
-          "step": step,
-          "K": k,
-          "Accuracy": round(accuracy,4)
+            "step": step,
+            "K": k,
+            "Accuracy": round(accuracy, 4)
         })
-        print(f"K-{k} acurácia total: {accuracy:.4f}")
+        print(f"K-{k} overall accuracy: {accuracy:.4f}")
 
   train_utils.barrier_across_hosts()
 
-
-
 if __name__ == '__main__':
-  app.run(main=knn_evaluate)
+    app.run(main=knn_evaluate)
