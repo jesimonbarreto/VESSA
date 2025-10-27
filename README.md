@@ -16,7 +16,7 @@ This repository provides all the components required to reproduce the experiment
 The implementation builds on **[Scenic](https://github.com/google-research/scenic)** and uses **[JAX](https://github.com/google/jax)** as the underlying framework for efficient, scalable training (CPU/GPU/TPU).
 
 > **Status:** Accepted at **NeurIPS 2025** — The Thirty-Ninth Annual Conference on Neural Information Processing Systems.  
-> **Preprint:** [📄 arXiv:2510.20994](http://arxiv.org/abs/2510.20994)
+> **[Paper](http://arxiv.org/abs/2510.20994)**
 
 ---
 
