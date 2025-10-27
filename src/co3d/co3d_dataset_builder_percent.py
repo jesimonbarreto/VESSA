@@ -1,4 +1,4 @@
-"""MVImgNet dataset."""
+"""CO3D dataset."""
 
 import tensorflow_datasets as tfds
 from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
@@ -50,7 +50,7 @@ class Builder(tfds.core.GeneratorBasedBuilder):
 
   def _info(self) -> tfds.core.DatasetInfo:
     """Returns the dataset metadata."""
-    # TODO(MVImgNet): Specifies the tfds.core.DatasetInfo object
+    # TODO(Co3D): Specifies the tfds.core.DatasetInfo object
     video_shape = (
         None,
         224,
@@ -76,7 +76,7 @@ class Builder(tfds.core.GeneratorBasedBuilder):
 
   def _split_generators(self, dl_manager: tfds.download.DownloadManager):
     """Returns SplitGenerators."""
-    # TODO(MVImgNet): Downloads the data and defines the splits
+    # TODO(Co3D): Downloads the data and defines the splits
     #path = dl_manager.download_and_extract('https://todo-data-url')
 
     path = '/mnt/disks/stg_dataset/dataset/CO3D/'

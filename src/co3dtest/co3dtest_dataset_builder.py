@@ -1,4 +1,4 @@
-"""MVImgNet dataset."""
+"""CO3D dataset."""
 
 import tensorflow_datasets as tfds
 from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
@@ -10,9 +10,9 @@ import jax
 import jax.numpy as jnp
 import re
 import random
-# Set seeds for reproducibility
-seed_value = 42
-random.seed(seed_value)  # Fixes seed for Python's random module
+
+#seed_value = 42
+#random.seed(seed_value)  # Fixes seed for Python's random module
 
 # JAX seed, typically used for JAX random operations (if needed)
 jax_key = jax.random.PRNGKey(seed_value)
@@ -29,18 +29,18 @@ classes_co3d = [
 
 
 
-# Função para obter a posição do número na lista ordenada
+# Get position 
 def get_position(name_class):
     """
-    Retorna a posição de um número na lista ordenada.
+    Return position.
     """
     if name_class in classes_co3d:
         return classes_co3d.index(name_class)
     else:
-        return -1  # Retorna -1 se o número não estiver na lista
+        return -1
 
 class Builder(tfds.core.GeneratorBasedBuilder):
-  """DatasetBuilder for mvimgnet dataset."""
+  """DatasetBuilder for CO3D dataset."""
 
   VERSION = tfds.core.Version('1.0.0')
   RELEASE_NOTES = {
@@ -51,7 +51,7 @@ class Builder(tfds.core.GeneratorBasedBuilder):
 
   def _info(self) -> tfds.core.DatasetInfo:
     """Returns the dataset metadata."""
-    # TODO(MVImgNet): Specifies the tfds.core.DatasetInfo object
+    # TODO(CO3D): Specifies the tfds.core.DatasetInfo object
     video_shape = (
         None,
         224,
@@ -98,36 +98,24 @@ class Builder(tfds.core.GeneratorBasedBuilder):
     ]
 
   def process_image(self, image_path):
-      # Leia o arquivo da imagem
       image = tf.io.read_file(image_path)
-      # Decodifique a imagem para um tensor
       image = tf.image.decode_jpeg(image, channels=3)
-      # Redimensione a imagem
       image = tf.image.resize(image, [224, 224])
-      # Normalize a imagem
-      #image = tf.cast(image, tf.float32) / 255.0
-      # Converta o tensor para um numpy array
       return image.numpy()
 
-  # Função para extrair o número da sequência do nome do arquivo
+  # Function to extract the number of frame using file name
   def get_sequence_number(self, path):
-      # Usa regex para encontrar o número no nome do arquivo
+      # Use regex to find the number of frame file
       match = re.search(r'(\d+)', path)
       if match:
           return int(match.group(1))
       return None
   
-  # Função para selecionar n valores aleatórios
+  # Function to select n random frames
   def select_random_values(self, sorted_paths, n):
-    # Garantir que n não seja maior que o número de elementos disponíveis
     n = min(n, len(sorted_paths))
-    
-    # Selecionar n valores aleatórios sem substituição
     random_indices = random.sample(range(len(sorted_paths)), n)
-    
-    # Retornar os valores correspondentes aos índices selecionados
     random_values = [sorted_paths[i] for i in random_indices]
-    
     return random_values
 
 
@@ -163,10 +151,10 @@ class Builder(tfds.core.GeneratorBasedBuilder):
         #base_names = [os.path.basename(fpath) for fpath in frames_video]
         id = label+'_'+obj_var
 
-        # Ordena a lista de paths usando o número da sequência como chave
+        #Sort the list of frames name using the sequence number as a key
         #frames_video = sorted(frames_video, key=self.get_sequence_number)
 
-        # Seleciona os pares
+        # Selecting pairs
         samples = self.select_random_values(frames_video, n)
         
         if len(samples) == 0:

@@ -1,12 +1,12 @@
-"""MVImgNet dataset."""
+"""Co3D dataset."""
 
-from . import mvimgnet_dataset_builder_partner
+from . import co3d_dataset_builder_partner
 import tensorflow_datasets as tfds
 
-class MvimgnetTest(tfds.testing.DatasetBuilderTestCase):
-  """Tests for MVImgNet dataset."""
-  # TODO(MVImgNet):
-  DATASET_CLASS = mvimgnet_dataset_builder_partner.Builder
+class Co3DTest(tfds.testing.DatasetBuilderTestCase):
+  """Tests for Co3D dataset."""
+  # TODO(Co3D):
+  DATASET_CLASS = co3d_dataset_builder_partner.Builder
   SPLITS = {
       'train': 3,  # Number of fake train example
       'test': 1,  # Number of fake test example

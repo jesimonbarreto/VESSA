@@ -10,7 +10,6 @@ import jax
 import jax.numpy as jnp
 import re
 import random
-# Set seeds for reproducibility
 seed_value = 42
 random.seed(seed_value)  # Fixes seed for Python's random module
 
@@ -131,26 +130,18 @@ class Builder(tfds.core.GeneratorBasedBuilder):
           yield fname, record
   '''
   def process_image(self, image_path):
-      # Leia o arquivo da imagem
       image = tf.io.read_file(image_path)
-      # Decodifique a imagem para um tensor
       image = tf.image.decode_jpeg(image, channels=3)
-      # Redimensione a imagem
       image = tf.image.resize(image, [224, 224])
-      # Normalize a imagem
-      #image = tf.cast(image, tf.float32) / 255.0
-      # Converta o tensor para um numpy array
+
       return image.numpy()
 
-  # Função para extrair o número da sequência do nome do arquivo
   def get_sequence_number(self, path):
-      # Usa regex para encontrar o número no nome do arquivo
       match = re.search(r'(\d+)', path)
       if match:
           return int(match.group(1))
       return None
   
-  # Função para selecionar pares com distância x entre as posições
   def select_pairs_with_distance(self, sorted_paths, x, n):
       max_start_index = len(sorted_paths) - x - 1
       if max_start_index < 0:
@@ -260,14 +251,6 @@ class Builder(tfds.core.GeneratorBasedBuilder):
     
 
     for label in tf.io.gfile.listdir(datapath):
-      #if int(label) not in filter_imagnet:
-      #   continue
-      '''if label not in keys_ref:
-         print('label')
-         print(label)
-         print('keys label')
-         print(keys_ref)
-         continue'''
       train_class_ref = train_ref[label]
       for obj_var in tf.io.gfile.listdir(os.path.join(datapath, label)):
         if obj_var not in train_class_ref:
@@ -277,10 +260,8 @@ class Builder(tfds.core.GeneratorBasedBuilder):
         #base_names = [os.path.basename(fpath) for fpath in frames_video]
         id = label+'_'+obj_var
 
-        # Ordena a lista de paths usando o número da sequência como chave
         frames_video = sorted(frames_video, key=self.get_sequence_number)
 
-        # Seleciona os pares
         dist = random.randint(5, 10)
 
         pairs = self.select_pairs_with_distance(frames_video, dist, n)

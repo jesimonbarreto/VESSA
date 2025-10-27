@@ -11,8 +11,8 @@ import jax.numpy as jnp
 import re
 import random
 # Set seeds for reproducibility
-seed_value = 42
-random.seed(seed_value)  # Fixes seed for Python's random module
+#seed_value = 42
+#random.seed(seed_value)  # Fixes seed for Python's random module
 
 # JAX seed, typically used for JAX random operations (if needed)
 jax_key = jax.random.PRNGKey(seed_value)
@@ -49,7 +49,6 @@ mvimgnet_classes = [
     "inflator", "ironmongery", "bulb"
 ]
 
-# Lista original com os números
 labels_number_ = [
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 
     31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 
@@ -63,7 +62,6 @@ labels_number_ = [
     250, 251, 252, 253, 254, 261, 263, 265, 266, 267
 ]
 
-# Função para obter a posição do número na lista ordenada
 def get_position(number):
     """
     Retorna a posição de um número na lista ordenada.
@@ -71,7 +69,7 @@ def get_position(number):
     if number in labels_number_:
         return labels_number_.index(number)
     else:
-        return -1  # Retorna -1 se o número não estiver na lista
+        return -1  
 
 class Builder(tfds.core.GeneratorBasedBuilder):
   """DatasetBuilder for mvimgnet dataset."""
@@ -131,36 +129,21 @@ class Builder(tfds.core.GeneratorBasedBuilder):
     ]
 
   def process_image(self, image_path):
-      # Leia o arquivo da imagem
       image = tf.io.read_file(image_path)
-      # Decodifique a imagem para um tensor
       image = tf.image.decode_jpeg(image, channels=3)
-      # Redimensione a imagem
       image = tf.image.resize(image, [224, 224])
-      # Normalize a imagem
-      #image = tf.cast(image, tf.float32) / 255.0
-      # Converta o tensor para um numpy array
       return image.numpy()
 
-  # Função para extrair o número da sequência do nome do arquivo
   def get_sequence_number(self, path):
-      # Usa regex para encontrar o número no nome do arquivo
       match = re.search(r'(\d+)', path)
       if match:
           return int(match.group(1))
       return None
   
-  # Função para selecionar n valores aleatórios
   def select_random_values(self, sorted_paths, n):
-    # Garantir que n não seja maior que o número de elementos disponíveis
     n = min(n, len(sorted_paths))
-    
-    # Selecionar n valores aleatórios sem substituição
     random_indices = random.sample(range(len(sorted_paths)), n)
-    
-    # Retornar os valores correspondentes aos índices selecionados
     random_values = [sorted_paths[i] for i in random_indices]
-    
     return random_values
 
 
@@ -196,13 +179,8 @@ class Builder(tfds.core.GeneratorBasedBuilder):
            continue
         dir_search = os.path.join(datapath, label, obj_var, 'images', "*.jpg")
         frames_video = tf.io.gfile.glob(dir_search)
-        #base_names = [os.path.basename(fpath) for fpath in frames_video]
         id = label+'_'+obj_var
 
-        # Ordena a lista de paths usando o número da sequência como chave
-        #frames_video = sorted(frames_video, key=self.get_sequence_number)
-
-        # Seleciona os pares
         samples = self.select_random_values(frames_video, n)
         
         if len(samples) == 0:
@@ -216,9 +194,3 @@ class Builder(tfds.core.GeneratorBasedBuilder):
             "label": get_position(int(label))
           }
           yield str(k)+'_'+id, record
-
-        #ROdar novamente [sem filtro de classes]
-        #COnfigurar dataset mvimgnet
-        #alterar validação para usar esse
-        #Carregar dados
-        #executar experimentop
