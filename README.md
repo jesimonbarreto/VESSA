@@ -1,4 +1,4 @@
-# VESSA: Video-based objEct-centric Self-Supervised Adaptation for Visual Foundation Models
+# VESSA: Video-based objEct-centric Self-Supervised Adaptation for Visual Foundation Models (NeurIPS)
 
 [![arXiv](https://img.shields.io/badge/arXiv-2510.20994-b31b1b.svg)](http://arxiv.org/abs/2510.20994)
 ![NeurIPS](https://img.shields.io/badge/NeurIPS-2025_Accepted-0b8457)
