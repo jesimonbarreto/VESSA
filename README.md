@@ -97,16 +97,6 @@ python src/eval_knn.py   --checkpoint /exp/vessa_vitb_run1/checkpoints/ckpt_last
 
 ---
 
-## Results (excerpt)
-
-> Full results are available in the paper. Illustrative teaser below:
-
-| Backbone | Dataset      | Eval (k) | Baseline (DINOv2) | **VESSA** |
-|----------|--------------|----------|-------------------|-----------|
-| ViT-B/16 | MVImgNet     | k=5      | xx.x              | **yy.y**  |
-| ViT-B/16 | CO3D-subset  | k=1      | xx.x              | **yy.y**  |
-
----
 
 ## Citation
 
